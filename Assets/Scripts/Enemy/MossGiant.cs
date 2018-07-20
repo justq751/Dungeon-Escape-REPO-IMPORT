@@ -4,13 +4,9 @@ using UnityEngine;
 
 public class MossGiant : Enemy
 {
-    private void Start()
+    //Использовать для инициализации
+    public override void Init()
     {
-        
-    }
-
-    public override void Update()
-    {
-        
+        base.Init();
     }
 }
