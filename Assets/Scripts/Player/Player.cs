@@ -1,26 +1,30 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityStandardAssets.CrossPlatformInput;
 
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IDamageable
 {
     private Rigidbody2D _rigidBody;
     private PlayerAnim _playerAnim;
 
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private float _speed = 5f;
+    public int diamonds;
+    public int Health { get; set; }
     private bool _facingRight = true;
     private bool _grounded = false;
     private float _move;
 
 
-    void Start ()
+    void Start()
     {
         _rigidBody = GetComponent<Rigidbody2D>();
         _playerAnim = GetComponent<PlayerAnim>();
-	}
-	
-	void Update ()
+        Health = 4;
+    }
+
+    void Update()
     {
         Movement();
         Attacking();
@@ -29,7 +33,7 @@ public class Player : MonoBehaviour
     //Движение и прыжки
     private void Movement()
     {
-        _move = Input.GetAxisRaw("Horizontal");
+        _move = CrossPlatformInputManager.GetAxisRaw("Horizontal");
         _grounded = IsGrounded();
 
         if (_facingRight == false && _move > 0)
@@ -40,8 +44,8 @@ public class Player : MonoBehaviour
         {
             Flip();
         }
-        
-        if (Input.GetKeyDown(KeyCode.Space) && _grounded == true)
+
+        if ((Input.GetKeyDown(KeyCode.Space) || CrossPlatformInputManager.GetButtonDown("B_Button")) && _grounded == true)
         {
             _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, _jumpForce);
             _playerAnim.Jump(true);
@@ -57,7 +61,7 @@ public class Player : MonoBehaviour
         Debug.DrawRay(transform.position, Vector2.down * 0.8f, Color.green);
         if (hitinfo.collider != null)
         {
-            Debug.Log("hit " + hitinfo.collider.name);
+            //Debug.Log("hit " + hitinfo.collider.name);
             _playerAnim.Jump(false);
             return true;
         }
@@ -80,9 +84,30 @@ public class Player : MonoBehaviour
     //Атака
     private void Attacking ()
     {
-        if (Input.GetMouseButtonDown(0) && _grounded == true)
+        if (CrossPlatformInputManager.GetButtonDown("A_Button") && _grounded == true)
         {
             _playerAnim.Attack();
         }
+    }
+
+    public void Damage()
+    {
+        if (Health < 1)
+        {
+            return;
+        }
+        Debug.Log("Damage(Player)");
+        Health--;
+        UIManager.Instance.UpdateLives(Health);
+        if (Health < 1)
+        {
+            _playerAnim.Death();
+        }
+    }
+
+    public void AddGems(int amount)
+    {
+        diamonds += amount;
+        UIManager.Instance.UpdateGemCount(diamonds);
     }
 }

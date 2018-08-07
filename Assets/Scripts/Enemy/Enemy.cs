@@ -4,26 +4,23 @@ using UnityEngine;
 
 public abstract class Enemy : MonoBehaviour
 {
+    public GameObject diamondPrefab;
+
     [SerializeField] protected int health;
     [SerializeField] protected int speed;
     [SerializeField] protected int gems;
     [SerializeField] protected Transform pointA, pointB;
+    protected bool isHit = false;
+    protected bool isDead = false;
+
     protected Vector3 currentTarget;
     protected Animator anim;
     protected SpriteRenderer sprite;
+    protected Player player;
 
     private void Start()
     {
         Init();
-    }
-
-    public void Update()
-    {
-        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
-        {
-            return;
-        }
-        Movement();
     }
 
     //Инициализация
@@ -31,6 +28,19 @@ public abstract class Enemy : MonoBehaviour
     {
         anim = GetComponentInChildren<Animator>();
         sprite = GetComponentInChildren<SpriteRenderer>();
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+    }
+
+    public virtual void Update()
+    {
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") && anim.GetBool("InCombat") == false)
+        {
+            return;
+        }
+        if (isDead == false)
+        {
+            Movement();
+        }
     }
 
     //Движение между точками
@@ -55,6 +65,31 @@ public abstract class Enemy : MonoBehaviour
             currentTarget = pointA.position;
             anim.SetTrigger("Idle");
         }
-        transform.position = Vector3.MoveTowards(transform.position, currentTarget, speed * Time.deltaTime);
+
+        if (isHit == false)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, currentTarget, speed * Time.deltaTime);
+        }
+        
+        //Дистанция между нами и врагом
+        float distance = Vector3.Distance(transform.localPosition, player.transform.localPosition);
+        if (distance > 4.0f)
+        {
+            isHit = false;
+            anim.SetBool("InCombat", false);
+        }
+
+        //Direction formula, в какую строну смотрит 
+        Vector3 direction = player.transform.localPosition - transform.localPosition;
+        //Куда повернуться
+        if (direction.x > 0 && anim.GetBool("InCombat") == true)
+        {
+            sprite.flipX = false;
+        }
+        else if (direction.x < 0 && anim.GetBool("InCombat") == true)
+        {
+            sprite.flipX = true;
+        }
+
     }
 }
